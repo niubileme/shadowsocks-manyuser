@@ -20,7 +20,7 @@ NODE_ID = '1'
 
 CHECKTIME = 30 # check service time
 SYNCTIME = 300 # sync traffic time
-
+RESETTIME = 300 # reset traffic time
 
 #BIND IP
 #if you want bind ipv4 and ipv6 '[::]'
