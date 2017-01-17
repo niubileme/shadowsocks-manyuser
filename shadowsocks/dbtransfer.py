@@ -60,7 +60,7 @@ class DbTransfer(object):
 
         if config.PANEL_VERSION == 'V2':
             import time
-            query_head = 'UPDATE user'
+            query_head = 'UPDATE SS'
             query_sub_when = ''
             query_sub_when2 = ''
             query_sub_in = None
@@ -94,7 +94,7 @@ class DbTransfer(object):
                     conn = cymysql.connect(host=config.MYSQL_HOST, port=config.MYSQL_PORT, user=config.MYSQL_USER,
                                            passwd=config.MYSQL_PASS, db=config.MYSQL_DB, charset='utf8')
                     cur = conn.cursor()
-                    cur.execute('SELECT id FROM user %s '
+                    cur.execute('SELECT id FROM SS %s '
                                 % (string))
                     rows = []
                     for r in cur.fetchall():
@@ -146,7 +146,7 @@ class DbTransfer(object):
         conn = cymysql.connect(host=config.MYSQL_HOST, port=config.MYSQL_PORT, user=config.MYSQL_USER,
                                passwd=config.MYSQL_PASS, db=config.MYSQL_DB, charset='utf8')
         cur = conn.cursor()
-        cur.execute("SELECT port, u, d, transfer_enable, passwd, switch, enable FROM user")
+        cur.execute("SELECT port, u, d, transfer_enable, passwd, switch, enable, isrest, last_rest_time, expiration_time FROM SS")
         rows = []
         for r in cur.fetchall():
             rows.append(list(r))
@@ -156,26 +156,53 @@ class DbTransfer(object):
 
     @staticmethod
     def del_server_out_of_bound_safe(rows):
+        import time
         for row in rows:
             server = json.loads(DbTransfer.get_instance().send_command('stat: {"server_port":%s}' % row[0]))
+            now_time = time.time()
             if server['stat'] != 'ko':
                 if row[5] == 0 or row[6] == 0:
-                    # stop disable or switch off user
+                    # 状态检查
                     logging.info('db stop server at port [%s] reason: disable' % (row[0]))
                     DbTransfer.send_command('remove: {"server_port":%s}' % row[0])
                 elif row[1] + row[2] >= row[3]:
-                    # stop out bandwidth user
+                    # 流量检查
                     logging.info('db stop server at port [%s] reason: out bandwidth' % (row[0]))
                     DbTransfer.send_command('remove: {"server_port":%s}' % row[0])
                 if server['password'] != row[4]:
-                    # password changed
+                    # 密码更改
                     logging.info('db stop server at port [%s] reason: password changed' % (row[0]))
+                    DbTransfer.send_command('remove: {"server_port":%s}' % row[0])
+                if now_time > row[9]:
+                    # 过期检查
+                    logging.info('db stop server at port [%s] reason: expiration time' % (row[0]))
                     DbTransfer.send_command('remove: {"server_port":%s}' % row[0])
             else:
                 if row[5] == 1 and row[6] == 1 and row[1] + row[2] < row[3]:
                     logging.info('db start server at port [%s] pass [%s]' % (row[0], row[4]))
                     DbTransfer.send_command('add: {"server_port": %s, "password":"%s"}' % (row[0], row[4]))
-                    # print('add: {"server_port": %s, "password":"%s"}'% (row[0], row[4]))
+
+    @staticmethod
+    def server_reset_traffic(rows):
+        import time
+        import datetime
+        for row in rows:
+            server = json.loads(DbTransfer.get_instance().send_command('stat: {"server_port":%s}' % row[0]))
+            now_time = time.time()
+            if server['stat'] != 'ko':
+                if row[5] == 1 and row[6] == 1 and row[1] + row[2] < row[3] and server['password'] == row[4] and now_time > row[9] and row[7] == 1 and now_time >= row[8]:
+                    # 流量重置
+                    last = datetime.datetime.now() + datetime.timedelta(days = 30)
+                    last_time = time.mktime(last.timetuple())
+                    conn = cymysql.connect(host=config.MYSQL_HOST, port=config.MYSQL_PORT, user=config.MYSQL_USER,
+                               passwd=config.MYSQL_PASS, db=config.MYSQL_DB, charset='utf8')
+                    cur = conn.cursor()
+                    sql = 'UPDATE SS Set d = 0, last_rest_time = %s WHERE port = %s' % (last_time, row[0])
+                    cur.execute(sql)
+                    cur.close()
+                    conn.close()
+                    logging.info('reset traffic at port [%s] ' % (row[0]))
+                      
 
     @staticmethod
     def thread_db():
@@ -187,7 +214,7 @@ class DbTransfer(object):
             logging.info('db loop')
             try:
                 rows = DbTransfer.get_instance().pull_db_all_user()
-                DbTransfer.del_server_out_of_bound_safe(rows)
+                DbTransfer.del_server_out_of_bound_safe(rows) # 校验服务
             except Exception as e:
                 import traceback
                 traceback.print_exc()
@@ -204,10 +231,13 @@ class DbTransfer(object):
         while True:
             logging.info('db loop2')
             try:
-                DbTransfer.get_instance().push_db_all_user()
+                rows = DbTransfer.get_instance().push_db_all_user()
+                DbTransfer.server_reset_traffic(rows) # 重置流量
             except Exception as e:
                 import traceback
                 traceback.print_exc()
                 logging.warn('db thread except:%s' % e)
             finally:
                 time.sleep(config.SYNCTIME)
+
+    
