@@ -1,14 +1,16 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-import logging
-import cymysql
-import time
-import sys
-import socket
-import config
 import json
-import urllib2, urllib
+import logging
+import socket
+import sys
+import time
+import urllib
+import urllib2
+
+import config
+import cymysql
 
 
 class DbTransfer(object):
@@ -146,7 +148,7 @@ class DbTransfer(object):
         conn = cymysql.connect(host=config.MYSQL_HOST, port=config.MYSQL_PORT, user=config.MYSQL_USER,
                                passwd=config.MYSQL_PASS, db=config.MYSQL_DB, charset='utf8')
         cur = conn.cursor()
-        cur.execute("SELECT port, u, d, transfer_enable, passwd, switch, enable, isrest, last_rest_time, expiration_time FROM SS")
+        cur.execute("SELECT port, u, d, transfer_enable, password, switch, enable, isrest, last_rest_time, expiration_time FROM SS")
         rows = []
         for r in cur.fetchall():
             rows.append(list(r))
@@ -239,5 +241,3 @@ class DbTransfer(object):
                 logging.warn('db thread except:%s' % e)
             finally:
                 time.sleep(config.SYNCTIME)
-
-    

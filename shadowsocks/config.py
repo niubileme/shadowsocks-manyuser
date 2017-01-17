@@ -1,10 +1,10 @@
 import logging
 
 #Config
-MYSQL_HOST = 'mengsky.net'
+MYSQL_HOST = '127.0.0.1'
 MYSQL_PORT = 3306
 MYSQL_USER = 'root'
-MYSQL_PASS = 'root'
+MYSQL_PASS = 'oppzk'
 MYSQL_DB = 'SSMM'
 
 MANAGE_PASS = 'passwd'
