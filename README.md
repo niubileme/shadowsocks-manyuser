@@ -30,10 +30,7 @@ Example:
     MANAGE_BIND_IP = '127.0.0.1'
     #make sure this port is idle
     MANAGE_PORT = 23333
-    
-    #must use 'V2'
-    PANEL_VERSION = 'V2'
-    
+    PANEL_VERSION = 'V2' # must use 'V2'
     #BIND IP
     #if you want bind ipv4 and ipv6 '[::]'
     #if you want bind all of ipv4 if '0.0.0.0'
