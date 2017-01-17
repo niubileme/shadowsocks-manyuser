@@ -233,7 +233,7 @@ class DbTransfer(object):
         while True:
             logging.info('db loop2')
             try:
-                rows = DbTransfer.get_instance().push_db_all_user()
+                rows = DbTransfer.get_instance().pull_db_all_user()
                 DbTransfer.server_reset_traffic(rows) # 重置流量
             except Exception as e:
                 import traceback
