@@ -1,5 +1,6 @@
 About manyuser
 ----------------
+for [shadowsocks-manyuser-management](https://github.com/niubileme/shadowsocks-manyuser-management)
 
 Install
 -------
@@ -8,15 +9,9 @@ install MySQL 5.x.x
 
 `pip install cymysql`
 
-create a database named `shadowsocks`
+create a database named `SSMM`
 
-import `shadowsocks.sql` into `shadowsocks`
-
-if you upgrade from old version make sure:
-
-  `pass` is varchar(32) NOT NULL,
-  `passwd` is varchar(32) NOT NULL,
-  `last_get_gift_time` not `last_get_gitf_time`
+import `ssmm.sql` into `SSMM`
 
 
 edit config.py
@@ -24,17 +19,21 @@ edit config.py
 Example:
 
     #Config
-    MYSQL_HOST = 'mengsky.net'
+    MYSQL_HOST = '127.0.0.1'
     MYSQL_PORT = 3306
     MYSQL_USER = 'root'
     MYSQL_PASS = 'root'
-    MYSQL_DB = 'shadowsocks'
+    MYSQL_DB = 'SSMM'
 
     MANAGE_PASS = 'passwd'
     #if you want manage in other server you should set this value to global ip
     MANAGE_BIND_IP = '127.0.0.1'
     #make sure this port is idle
     MANAGE_PORT = 23333
+    
+    #must use 'V2'
+    PANEL_VERSION = 'V2'
+    
     #BIND IP
     #if you want bind ipv4 and ipv6 '[::]'
     #if you want bind all of ipv4 if '0.0.0.0'
