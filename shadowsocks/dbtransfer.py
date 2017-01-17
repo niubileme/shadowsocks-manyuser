@@ -233,6 +233,23 @@ class DbTransfer(object):
         while True:
             logging.info('db loop2')
             try:
+                DbTransfer.get_instance().push_db_all_user() # 同步流量
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                logging.warn('db thread except:%s' % e)
+            finally:
+                time.sleep(config.SYNCTIME)
+                
+    @staticmethod
+    def thread_reset():
+        import socket
+        import time
+        timeout = 30
+        socket.setdefaulttimeout(timeout)
+        while True:
+            logging.info('db loop3')
+            try:
                 rows = DbTransfer.get_instance().pull_db_all_user()
                 DbTransfer.server_reset_traffic(rows) # 重置流量
             except Exception as e:
@@ -240,4 +257,4 @@ class DbTransfer(object):
                 traceback.print_exc()
                 logging.warn('db thread except:%s' % e)
             finally:
-                time.sleep(config.SYNCTIME)
+                time.sleep(config.RESETTIME)
