@@ -192,7 +192,7 @@ class DbTransfer(object):
             server = json.loads(DbTransfer.get_instance().send_command('stat: {"server_port":%s}' % row[0]))
             now_time = time.time()
             if server['stat'] != 'ko':
-                if row[5] == 1 and row[6] == 1 and row[1] + row[2] < row[3] and server['password'] == row[4] and now_time > row[9] and row[7] == 1 and now_time >= row[8]:
+                if row[5] == 1 and row[6] == 1 and row[1] + row[2] < row[3] and server['password'] == row[4] and now_time > row[9] and row[7] == 1 and now_time > row[8]:
                     # 流量重置
                     last = datetime.datetime.now() + datetime.timedelta(days = 30)
                     last_time = time.mktime(last.timetuple())
